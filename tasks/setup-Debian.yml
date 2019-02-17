@@ -2,5 +2,14 @@
 - name: Update apt cache.
   apt: update_cache=yes cache_valid_time=3600
 
+- name: Wait for apt lock
+  shell: while fuser /var/lib/dpkg/lock >/dev/null ; do sleep $[ ( $RANDOM % 10 )  + 1 ]s ; done
+  args:
+    executable: /bin/bash
+
 - name: Ensure Apache is installed on Debian.
   apt: "name={{ apache_packages }} state={{ apache_packages_state }}"
+  register: apt_install_apache
+  until: apt_install_apache is succeeded
+  retries: 10
+  delay: 3
